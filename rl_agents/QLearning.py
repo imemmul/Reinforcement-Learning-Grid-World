@@ -34,7 +34,7 @@ class QLearningAgent(RLAgent):
 
         assert epsilon >= 0.0, "epsilon must be >= 0"
         self.epsilon = epsilon
-
+        self.name = "QLearning"
         assert 0.0 <= epsilon_decay <= 1.0, "epsilonDecay must be in range [0.0, 1.0]"
         self.epsilon_decay = epsilon_decay
 
@@ -47,7 +47,7 @@ class QLearningAgent(RLAgent):
         assert max_episode > 0, "Maximum episode must be > 0"
         self.max_episode = max_episode
 
-        self.Q = np.zeros((self.state_size, self.action_size))
+        self.Q = np.zeros((self.state_size, self.action_size)) # init Q-table with zeros
 
         # If you want to use more parameters, you can initiate below
 
@@ -60,8 +60,29 @@ class QLearningAgent(RLAgent):
         :param kwargs: Empty
         :return: Nothing
         """
-
-        pass
+        td_errors = []
+        rewards = []
+        for episode in range(self.max_episode):
+            state = self.env.reset()  # get initial state
+            done = False
+            total_reward = 0
+            while not done:
+                action = self.act(state, is_training=True)  # get action using epsilon-greedy
+                next_state, reward, done = self.env.move(action)  # take action and get response
+                target = reward
+                total_reward += reward
+                if not done:
+                    target += self.discount_rate * np.max(self.Q[next_state])  # calculate target
+                td_error = target - self.Q[state][action]  # calculate temporal difference error
+                self.Q[state][action] += self.alpha * td_error  # update Q value
+                state = next_state  # go to next state
+                if self.epsilon > self.epsilon_min:  # decay epsilon
+                    self.epsilon *= self.epsilon_decay
+            td_errors.append(td_error)
+            rewards.append(total_reward)
+        self.save_vs(td_errors, rewards, filename="QLearning", param_name=kwargs['param_name'])
+        return td_errors, rewards
+        
 
     def act(self, state: int, is_training: bool) -> int:
         """
@@ -75,5 +96,7 @@ class QLearningAgent(RLAgent):
         :param is_training: If training use e-greedy, otherwise decide action based on the Policy.
         :return: Action as integer
         """
-
-        return self.rnd.randint(0, self.action_size - 1)
+        if is_training and np.random.rand() < self.epsilon:
+           return self.rnd.randint(0, self.action_size - 1)
+        else: # take the best action based on Q value
+            return np.argmax(self.Q[state])

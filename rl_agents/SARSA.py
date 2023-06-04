@@ -7,7 +7,7 @@
 from Environment import Environment
 from rl_agents.RLAgent import RLAgent
 import numpy as np
-
+import matplotlib.pyplot as plt
 
 class SARSAAgent(RLAgent):
     epsilon: float          # Current epsilon value for epsilon-greedy
@@ -34,7 +34,7 @@ class SARSAAgent(RLAgent):
 
         assert epsilon >= 0.0, "epsilon must be >= 0"
         self.epsilon = epsilon
-
+        self.name = "SARSA"
         assert 0.0 <= epsilon_decay <= 1.0, "epsilonDecay must be in range [0.0, 1.0]"
         self.epsilon_decay = epsilon_decay
 
@@ -51,7 +51,7 @@ class SARSAAgent(RLAgent):
 
         # If you want to use more parameters, you can initiate below
 
-    def train(self, **kwargs):
+    def train(self, experiment=False, **kwargs):
         """
         DO NOT CHANGE the name, parameters and return type of the method.
 
@@ -60,8 +60,37 @@ class SARSAAgent(RLAgent):
         :param kwargs: Empty
         :return: Nothing
         """
-
-        pass
+        td_errors = []
+        rewards = [] 
+        for episode in range(self.max_episode):
+            state = self.env.reset()
+            action = self.act(state, is_training=True)
+            done = False
+            total_reward = 0 
+            while not done:
+                next_state, reward, done = self.env.move(action)
+                total_reward += reward
+                next_action = self.act(next_state, is_training=done) # only use e-greedy when the episode is not done.
+                td_target = reward
+                if not done:
+                    td_target += self.discount_rate * self.Q[next_state, next_action]
+                td_error = td_target - self.Q[state, action]
+                old_Q = self.Q[state, action]
+                self.Q[state, action] += self.alpha * td_error
+                # max_q_change = np.abs(old_Q - self.Q).max()
+                state = next_state
+                action = next_action
+                # if experiment:
+                #     print(max_q_change)
+                #     if max_q_change < self.epsilon:
+                #         return True
+                #     return False
+            if self.epsilon > self.epsilon_min:
+                self.epsilon *= self.epsilon_decay
+            td_errors.append(td_error)
+            rewards.append(total_reward)
+        # self.save_vs(td_errors, rewards, filename="SARSA")
+        return td_errors, rewards
 
     def act(self, state: int, is_training: bool) -> int:
         """
@@ -75,5 +104,7 @@ class SARSAAgent(RLAgent):
         :param is_training: If training use e-greedy, otherwise decide action based on the Policy.
         :return: Action as integer
         """
-
-        return self.rnd.randint(0, self.action_size - 1)
+        if is_training and np.random.rand() < self.epsilon:
+            return self.rnd.randint(0, self.action_size - 1)
+        else:
+            return np.argmax(self.Q[state])

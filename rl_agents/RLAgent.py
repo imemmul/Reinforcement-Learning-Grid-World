@@ -2,7 +2,7 @@ from typing import List
 from Environment import Environment
 from abc import ABC, abstractmethod
 import random
-
+import matplotlib.pyplot as plt
 
 class RLAgent(ABC):
     action_size: int        # Number of possible actions
@@ -86,4 +86,24 @@ class RLAgent(ABC):
             i += 1
 
         return actions, total_reward
+    
+    def save_vs(self, x_axis, y_axis, filename, param_name):
+        plt.figure(figsize=(12, 6))
+        plt.subplot(1, 2, 1)
+        plt.plot(x_axis)
+        plt.title("TD Error per Episode")
+        plt.xlabel("Episode")
+        plt.ylabel("TD Error")
+        
+        plt.subplot(1, 2, 2)
+        plt.plot(y_axis)
+        plt.title("Reward per Episode")
+        plt.xlabel("Episode")
+        plt.ylabel("Reward")
+
+        plt.tight_layout()
+        plt.savefig(f"./figures/reward_tderror_{filename}_{param_name}.png")
+    
+            
+        
 
