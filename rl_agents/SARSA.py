@@ -51,7 +51,7 @@ class SARSAAgent(RLAgent):
 
         # If you want to use more parameters, you can initiate below
 
-    def train(self, experiment=False, **kwargs):
+    def train(self, **kwargs):
         """
         DO NOT CHANGE the name, parameters and return type of the method.
 
@@ -61,7 +61,8 @@ class SARSAAgent(RLAgent):
         :return: Nothing
         """
         td_errors = []
-        rewards = [] 
+        rewards = []
+        QValues_history = []
         for episode in range(self.max_episode):
             state = self.env.reset()
             action = self.act(state, is_training=True)
@@ -77,20 +78,15 @@ class SARSAAgent(RLAgent):
                 td_error = td_target - self.Q[state, action]
                 old_Q = self.Q[state, action]
                 self.Q[state, action] += self.alpha * td_error
-                # max_q_change = np.abs(old_Q - self.Q).max()
                 state = next_state
                 action = next_action
-                # if experiment:
-                #     print(max_q_change)
-                #     if max_q_change < self.epsilon:
-                #         return True
-                #     return False
             if self.epsilon > self.epsilon_min:
                 self.epsilon *= self.epsilon_decay
             td_errors.append(td_error)
             rewards.append(total_reward)
-        # self.save_vs(td_errors, rewards, filename="SARSA")
-        return td_errors, rewards
+            QValues_history.append(self.Q.copy())
+        self.save_vs(td_errors, rewards, filename="SARSA", param_name=kwargs['param_name'], param_value=[kwargs['param_value']])
+        return td_errors, rewards, QValues_history
 
     def act(self, state: int, is_training: bool) -> int:
         """

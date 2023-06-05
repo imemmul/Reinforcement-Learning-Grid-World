@@ -13,6 +13,10 @@ from Environment import Environment
 import time
 from tree_search_agents import AStarAgent
 import matplotlib.pyplot as plt
+from matplotlib.colors import LinearSegmentedColormap
+import seaborn as sns
+import PIL
+import imageio
 
 GRID_DIR = "grid_worlds/"
 
@@ -22,21 +26,37 @@ def run_experiment(env, agent, hyperparams, param_name, default_params):
     actions = ["UP", "LEFT", "DOWN", "RIGHT"]
     for param in hyperparams[param_name]:
         default_params[param_name] = param
-
         agent_created = agent(env, 42, **default_params)
-        
         start_time = time.time_ns()
-        td_errors, rewards = agent_created.train(**{"param_name":{param_name}})
+        kwargs = {"param_name":param_name, "param_value": param}
+        td_errors, rewards, q_history = agent_created.train(**kwargs)
         path, score = agent_created.validate()
         end_time = time.time_ns()
         print("Actions:", [actions[i] for i in path])
         print("Score:", score)
         print("Elapsed Time (ms):", (end_time - start_time) * 1e-6)
-
+        plot_training(q_history, agent_created, param_name=param_name, param_value=param)
         experiments.append((param, td_errors, rewards))
         
     plot_experiments(experiments=experiments, agent_name=agent_created.name, exp_name=param_name)
     return experiments, agent_created
+
+def plot_training(q_history, agent, param_name, param_value):
+    filenames = []
+    colors = ["red", "green"]
+    cmap = LinearSegmentedColormap.from_list("custom", colors)
+    # TODO plot goal and starting grids
+    for i, q_values in enumerate(q_history):
+        max_Q_values = np.max(q_values, axis=1).reshape((agent.env.grid_size, agent.env.grid_size))
+        plt.figure(figsize=(10,10))
+        sns.heatmap(max_Q_values, annot=True, fmt=".2f", cmap=cmap, square=True)
+        plt.title(f'Maximum Q-values - Episode {i}')
+        filenames.append(f"./temp_figures/heatmap_{i}.png")
+        plt.savefig(f'./temp_figures/heatmap_{i}.png') # Save each figure with a different name
+        plt.close()
+
+    images = [imageio.imread(filename) for filename in filenames]
+    imageio.mimsave(f'./figures/training_heatmap_{agent.name}_{param_name}_{param_value}.gif', images, duration=0.1)
 
 def plot_experiments(experiments, agent_name, exp_name):
     fig, axs = plt.subplots(2, figsize=(10, 10))
@@ -46,12 +66,12 @@ def plot_experiments(experiments, agent_name, exp_name):
         axs[1].plot(td_errors, label=params)
 
     axs[0].set_xlabel('Episode')
-    axs[0].set_ylabel('Mean Reward')
+    axs[0].set_ylabel('Rewards')
     axs[0].legend(loc='best')
     axs[0].set_title('Hyperparameters Tuning - Reward')
 
     axs[1].set_xlabel('Episode')
-    axs[1].set_ylabel('Mean TD Error')
+    axs[1].set_ylabel('TD Error')
     axs[1].legend(loc='best')
     axs[1].set_title('Hyperparameters Tuning - TD Error')
 

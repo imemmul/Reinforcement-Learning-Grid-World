@@ -51,6 +51,7 @@ class QLearningAgent(RLAgent):
 
         # If you want to use more parameters, you can initiate below
 
+    
     def train(self, **kwargs):
         """
         DO NOT CHANGE the name, parameters and return type of the method.
@@ -62,6 +63,7 @@ class QLearningAgent(RLAgent):
         """
         td_errors = []
         rewards = []
+        QValues_history = []
         for episode in range(self.max_episode):
             state = self.env.reset()  # get initial state
             done = False
@@ -80,8 +82,9 @@ class QLearningAgent(RLAgent):
                     self.epsilon *= self.epsilon_decay
             td_errors.append(td_error)
             rewards.append(total_reward)
-        self.save_vs(td_errors, rewards, filename="QLearning", param_name=kwargs['param_name'])
-        return td_errors, rewards
+            QValues_history.append(self.Q.copy())
+        self.save_vs(td_errors, rewards, filename="QLearning", param_name=kwargs['param_name'], param_value=[kwargs['param_value']])
+        return td_errors, rewards, QValues_history
         
 
     def act(self, state: int, is_training: bool) -> int:

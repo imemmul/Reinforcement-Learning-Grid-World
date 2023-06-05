@@ -87,7 +87,7 @@ class RLAgent(ABC):
 
         return actions, total_reward
     
-    def save_vs(self, x_axis, y_axis, filename, param_name):
+    def save_vs(self, x_axis, y_axis, filename, param_name, param_value):
         plt.figure(figsize=(12, 6))
         plt.subplot(1, 2, 1)
         plt.plot(x_axis)
@@ -102,7 +102,7 @@ class RLAgent(ABC):
         plt.ylabel("Reward")
 
         plt.tight_layout()
-        plt.savefig(f"./figures/reward_tderror_{filename}_{param_name}.png")
+        plt.savefig(f"./figures/reward_tderror_{filename}_{param_name}_{param_value}.png")
     
             
         
