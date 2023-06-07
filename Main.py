@@ -56,7 +56,7 @@ def plot_training(q_values, agent, param_name, param_value):
     sns.heatmap(max_Q_values, annot=True, fmt=".2f", cmap=cmap, square=True, ax=ax)
     ax. set_title(f'Maximum Q-values - Episode')
     # filenames.append(f"./temp_figures/heatmap_{i}.png")
-    plt.savefig(f'./figures_{agent.name}_{param_name}_{param_value}.png')  # Save each figure with a different name
+    plt.savefig(f'./figures/experiment_{agent.name}_{param_name}_{param_value}.png')  # Save each figure with a different name
         # plt.close(fig)
 
     # Below code gives GIF.
