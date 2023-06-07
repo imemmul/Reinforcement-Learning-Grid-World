@@ -80,11 +80,11 @@ class QLearningAgent(RLAgent):
                 state = next_state  # go to next state
                 if self.epsilon > self.epsilon_min:  # decay epsilon
                     self.epsilon *= self.epsilon_decay
+            QValues_history.append(self.Q)
             td_errors.append(td_error)
             rewards.append(total_reward)
-            QValues_history.append(self.Q.copy())
         self.save_vs(td_errors, rewards, filename="QLearning", param_name=kwargs['param_name'], param_value=[kwargs['param_value']])
-        return td_errors, rewards, QValues_history
+        return td_errors, rewards, self.Q
         
 
     def act(self, state: int, is_training: bool) -> int:

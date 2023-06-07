@@ -82,11 +82,11 @@ class SARSAAgent(RLAgent):
                 action = next_action
             if self.epsilon > self.epsilon_min:
                 self.epsilon *= self.epsilon_decay
+            QValues_history.append(self.Q)
             td_errors.append(td_error)
             rewards.append(total_reward)
-            QValues_history.append(self.Q.copy())
         self.save_vs(td_errors, rewards, filename="SARSA", param_name=kwargs['param_name'], param_value=[kwargs['param_value']])
-        return td_errors, rewards, QValues_history
+        return td_errors, rewards, self.Q
 
     def act(self, state: int, is_training: bool) -> int:
         """
